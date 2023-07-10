@@ -1,22 +1,16 @@
 from flask import Flask, request, jsonify
-<<<<<<< HEAD
 from langchain.indexes import VectorstoreIndexCreator
 from langchain.document_loaders import PyPDFDirectoryLoader
 from langchain.callbacks import get_openai_callback
-=======
->>>>>>> b385a1160e5bc45c7f3f694a5e3cba41b221c74a
 from azure.storage.blob import BlobServiceClient, BlobClient
 import os
 
 app = Flask(__name__)
 
-<<<<<<< HEAD
 class DownloadPayload:
     def __init__(self, blob_name):
         self.blob_name = blob_name
 
-=======
->>>>>>> b385a1160e5bc45c7f3f694a5e3cba41b221c74a
 def read_text_from_file(file_path):
     try:
         with open(file_path, "r") as file:
@@ -47,12 +41,9 @@ def download_file_from_blob(container_name, blob_name):
         print(f"Error downloading file '{blob_name}': {str(e)}")
         return False
 
-<<<<<<< HEAD
-=======
 
 app = Flask(__name__)
 
->>>>>>> b385a1160e5bc45c7f3f694a5e3cba41b221c74a
 @app.route("/download", methods=["POST"])
 def download_file():
     payload = request.json
@@ -67,6 +58,8 @@ def download_file():
         return jsonify({"message": "File download completed successfully."})
     else:
         return jsonify({"message": "File download failed."}), 500
+
+
 
 
 if __name__ == "__main__":

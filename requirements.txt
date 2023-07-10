@@ -1,7 +1,5 @@
-<<<<<<< HEAD
 flask
 azure-storage-blob
-=======
 azure-storage-blob
 langchain
 openai
@@ -15,4 +13,3 @@ hnswlib==0.7.0
 clickhouse-connect==0.5.7
 sentence-transformers==2.2.2
 flask
->>>>>>> b385a1160e5bc45c7f3f694a5e3cba41b221c74a
