@@ -1,11 +1,7 @@
 from flask import Flask, request, jsonify
-from pydantic import BaseModel
 from azure.storage.blob import BlobServiceClient, BlobClient
 import os
 
-
-class DownloadPayload(BaseModel):
-    blob_name: str
 
 def read_text_from_file(file_path):
     try:
@@ -15,6 +11,7 @@ def read_text_from_file(file_path):
     except Exception as e:
         print(f"Error reading file '{file_path}': {str(e)}")
         return None
+
 
 def download_file_from_blob(container_name, blob_name):
     try:
@@ -36,19 +33,23 @@ def download_file_from_blob(container_name, blob_name):
         print(f"Error downloading file '{blob_name}': {str(e)}")
         return False
 
+
 app = Flask(__name__)
 
 @app.route("/download", methods=["POST"])
 def download_file():
     payload = request.json
-    blob_name = payload["blob_name"]
+    blob_name = payload.get("blob_name")
+    
+    if not blob_name:
+        return jsonify({"message": "Blob name not provided."}), 400
     
     success = download_file_from_blob("transcript", blob_name)
     
     if success:
         return jsonify({"message": "File download completed successfully."})
     else:
-        return jsonify({"message": "File download failed."})
+        return jsonify({"message": "File download failed."}), 500
 
 
 if __name__ == "__main__":
