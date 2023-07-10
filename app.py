@@ -1,7 +1,4 @@
 from flask import Flask, request, jsonify
-from langchain.indexes import VectorstoreIndexCreator
-from langchain.document_loaders import PyPDFDirectoryLoader
-from langchain.callbacks import get_openai_callback
 from azure.storage.blob import BlobServiceClient, BlobClient
 import os
 
