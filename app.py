@@ -1,63 +1,62 @@
 from flask import Flask, request, jsonify
-from azure.storage.blob import BlobServiceClient, BlobClient
+from azure.storage.blob import BlobServiceClient, ContainerClient
 import os
 
 app = Flask(__name__)
 
-class DownloadPayload:
-    def __init__(self, blob_name):
-        self.blob_name = blob_name
+# Replace these with your own Azure Blob Storage credentials
+connection_string = "DefaultEndpointsProtocol=https;AccountName=azuretestshubham832458;AccountKey=2yEaP59qlgKVv6kEUCA5ARB4wdV3ZRoL2X9zjYCcIxOSYAG1CSBbBlAMPx3uBIe7ilQtSh7purEK+AStvFn8GA==;EndpointSuffix=core.windows.net"
 
-def read_text_from_file(file_path):
+# Initialize the BlobServiceClient using your connection string
+blob_service_client = BlobServiceClient.from_connection_string(connection_string)
+
+# Function to create the "transcript" folder if it doesn't exist
+def create_transcript_folder():
+    folder_path = "transcript"
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+
+# Route to download a blob
+@app.route('/download', methods=['POST'])
+def download_blob():
     try:
-        with open(file_path, "r") as file:
-            text = file.read()
-        return text
+        data = request.get_json()
+        container_name = data.get('container_name')
+        blob_name = data.get('blob_name')
+        local_file_path = f"transcript/{blob_name}"  # Change this path as needed
+
+        # Create the "transcript" folder if it doesn't exist
+        create_transcript_folder()
+
+        container_client = blob_service_client.get_container_client(container_name)
+        blob_client = container_client.get_blob_client(blob_name)
+
+        with open(local_file_path, "wb") as local_file:
+            blob_data = blob_client.download_blob()
+            blob_data.readinto(local_file)
+
+        return jsonify({"message": f"Blob {blob_name} has been downloaded to {local_file_path}"})
+
     except Exception as e:
-        print(f"Error reading file '{file_path}': {str(e)}")
-        return None
+        return jsonify({"error": str(e)}), 500
 
-
-def download_file_from_blob(container_name, blob_name):
+# Route to delete all blobs in a container
+@app.route('/delete', methods=['POST'])
+def delete_all_blobs_in_container():
     try:
-        connection_string = "DefaultEndpointsProtocol=https;AccountName=azuretestshubham832458;AccountKey=2yEaP59qlgKVv6kEUCA5ARB4wdV3ZRoL2X9zjYCcIxOSYAG1CSBbBlAMPx3uBIe7ilQtSh7purEK+AStvFn8GA==;EndpointSuffix=core.windows.net"  # Replace with your Azure Blob Storage connection string
-        
-        blob_service_client = BlobServiceClient.from_connection_string(connection_string)
-        blob_client = blob_service_client.get_blob_client(container=container_name, blob=blob_name)
-        
-        destination_path = f"transcripts/{blob_name}"  # Replace with the desired destination path
-        
-        os.makedirs(os.path.dirname(destination_path), exist_ok=True)  # Create the destination directory if it doesn't exist
-        
-        with open(destination_path, "wb") as file:
-            file.write(blob_client.download_blob().readall())
-        
-        print(f"File downloaded successfully: {destination_path}")
-        return True
+        data = request.get_json()
+        container_name = data.get('container_name')
+
+        container_client = blob_service_client.get_container_client(container_name)
+        blobs = container_client.list_blobs()
+
+        for blob in blobs:
+            container_client.delete_blob(blob.name)
+
+        return jsonify({"message": f"All blobs in container {container_name} have been deleted."})
+
     except Exception as e:
-        print(f"Error downloading file '{blob_name}': {str(e)}")
-        return False
+        return jsonify({"error": str(e)}), 500
 
-
-app = Flask(__name__)
-
-@app.route("/download", methods=["POST"])
-def download_file():
-    payload = request.json
-    blob_name = payload.get("blob_name")
-    
-    if not blob_name:
-        return jsonify({"message": "Blob name not provided."}), 400
-    
-    success = download_file_from_blob("transcript", blob_name)
-    
-    if success:
-        return jsonify({"message": "File download completed successfully."})
-    else:
-        return jsonify({"message": "File download failed."}), 500
-
-
-
-
-if __name__ == "__main__":
-    app.run()
+if __name__ == '__main__':
+    app.run(debug=True)
